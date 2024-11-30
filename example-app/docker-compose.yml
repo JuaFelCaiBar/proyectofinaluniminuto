@@ -20,13 +20,15 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-            - sail
+            - example-app_sail
         depends_on:
             - mysql
             - redis
             - meilisearch
             - mailpit
             - selenium
+        command: ["sh", "-c", "wait-for-it.sh mysql:3306 -- php artisan migrate"]
+
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -42,7 +44,7 @@ services:
             - 'sail-mysql:/var/lib/mysql'
             - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
-            - sail
+            - example-app_sail
         healthcheck:
             test:
                 - CMD
@@ -51,6 +53,7 @@ services:
                 - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
+
     phpmyadmin:
         container_name: phpmyadmin_laravel
         depends_on:
@@ -62,7 +65,8 @@ services:
             PMA_HOST: mysql
             UPLOAD_LIMIT: 400MB
         networks:
-            - sail
+            - example-app_sail
+
     redis:
         image: 'redis:alpine'
         ports:
@@ -70,7 +74,7 @@ services:
         volumes:
             - 'sail-redis:/data'
         networks:
-            - sail
+            - example-app_sail
         healthcheck:
             test:
                 - CMD
@@ -78,6 +82,7 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+
     meilisearch:
         image: 'getmeili/meilisearch:latest'
         ports:
@@ -87,7 +92,7 @@ services:
         volumes:
             - 'sail-meilisearch:/meili_data'
         networks:
-            - sail
+            - example-app_sail
         healthcheck:
             test:
                 - CMD
@@ -97,13 +102,15 @@ services:
                 - 'http://127.0.0.1:7700/health'
             retries: 3
             timeout: 5s
+
     mailpit:
         image: 'axllent/mailpit:latest'
         ports:
             - '${FORWARD_MAILPIT_PORT:-1025}:1025'
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
         networks:
-            - sail
+            - example-app_sail
+
     selenium:
         image: selenium/standalone-chromium
         extra_hosts:
@@ -111,10 +118,12 @@ services:
         volumes:
             - '/dev/shm:/dev/shm'
         networks:
-            - sail
+            - example-app_sail
+
 networks:
-    sail:
+    example-app_sail:
         driver: bridge
+
 volumes:
     sail-mysql:
         driver: local
@@ -122,3 +131,4 @@ volumes:
         driver: local
     sail-meilisearch:
         driver: local
+
